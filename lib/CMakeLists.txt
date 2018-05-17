@@ -413,7 +413,7 @@ if(${CMAKE_VERSION} VERSION_GREATER "2.8.9")
   # if we find one that matches our current system architecture
   # set up the assembler flags and include the source files
   foreach(ARCH ${ASM_ARCHS_AVAILABLE})
-      string(REGEX MATCH "${ARCH}" ASM_ARCH "${available_archs}")
+      string(REGEX MATCH "${ARCH}$" ASM_ARCH "${available_archs}")
     if( ASM_ARCH STREQUAL "neon" )
       message(STATUS "---- Adding ASM files") # we always use ATT syntax
       message(STATUS "-- Detected neon architecture; enabling ASM")

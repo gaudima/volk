@@ -178,6 +178,48 @@ volk_16ic_s32f_deinterleave_32f_x2_neon(float* iBuffer, float* qBuffer, const lv
 }
 #endif /* LV_HAVE_GENERIC */
 
+#ifdef LV_HAVE_NEON64
+#include <arm_neon.h>
+static inline void
+volk_16ic_s32f_deinterleave_32f_x2_neon64(float* iBuffer, float* qBuffer, const lv_16sc_t* complexVector,
+                                        const float scalar, unsigned int num_points)
+{
+  const int16_t* complexVectorPtr = (const int16_t*)complexVector;
+  float* iBufferPtr = iBuffer;
+  float* qBufferPtr = qBuffer;
+  unsigned int eighth_points = num_points / 4;
+  unsigned int number;
+  float iScalar = 1.f/scalar;
+  float32x4_t invScalar;
+  invScalar = vld1q_dup_f32(&iScalar);
+
+  int16x4x2_t complexInput_s16;
+  int32x4x2_t complexInput_s32;
+  float32x4x2_t complexFloat;
+
+  for(number = 0; number < eighth_points; number++){
+    complexInput_s16 = vld2_s16(complexVectorPtr);
+    complexInput_s32.val[0] = vmovl_s16(complexInput_s16.val[0]);
+    complexInput_s32.val[1] = vmovl_s16(complexInput_s16.val[1]);
+    complexFloat.val[0] = vcvtq_f32_s32(complexInput_s32.val[0]);
+    complexFloat.val[1] = vcvtq_f32_s32(complexInput_s32.val[1]);
+    complexFloat.val[0] = vmulq_f32(complexFloat.val[0], invScalar);
+    complexFloat.val[1] = vmulq_f32(complexFloat.val[1], invScalar);
+    vst1q_f32(iBufferPtr, complexFloat.val[0]);
+    vst1q_f32(qBufferPtr, complexFloat.val[1]);
+    complexVectorPtr += 8;
+    iBufferPtr += 4;
+    qBufferPtr += 4;
+  }
+
+  for(number = eighth_points*4; number < num_points; number++){
+    *iBufferPtr++ = (float)(*complexVectorPtr++) / scalar;
+    *qBufferPtr++ = (float)(*complexVectorPtr++) / scalar;
+  }
+}
+#endif /* LV_HAVE_GENERIC */
+
+
 #ifdef LV_HAVE_ORC
 extern void
 volk_16ic_s32f_deinterleave_32f_x2_a_orc_impl(float* iBuffer, float* qBuffer, const lv_16sc_t* complexVector,

@@ -146,6 +146,35 @@ volk_32f_x2_interleave_32fc_neon(lv_32fc_t* complexVector, const float* iBuffer,
 }
 #endif /* LV_HAVE_NEON */
 
+#ifdef LV_HAVE_NEON64
+#include <arm_neon.h>
+
+static inline void
+volk_32f_x2_interleave_32fc_neon64(lv_32fc_t* complexVector, const float* iBuffer,
+                                 const float* qBuffer, unsigned int num_points)
+{
+  unsigned int quarter_points = num_points / 4;
+  unsigned int number;
+  float* complexVectorPtr = (float*) complexVector;
+
+  float32x4x2_t complex_vec;
+  for(number=0; number < quarter_points; ++number) {
+    complex_vec.val[0] = vld1q_f32(iBuffer);
+    complex_vec.val[1] = vld1q_f32(qBuffer);
+    vst2q_f32(complexVectorPtr, complex_vec);
+    iBuffer += 4;
+    qBuffer += 4;
+    complexVectorPtr += 8;
+  }
+
+  for(number=quarter_points * 4; number < num_points; ++number) {
+    *complexVectorPtr++ = *iBuffer++;
+    *complexVectorPtr++ = *qBuffer++;
+  }
+}
+#endif /* LV_HAVE_NEON64 */
+
+
 
 #ifdef LV_HAVE_GENERIC
 

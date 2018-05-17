@@ -151,6 +151,14 @@ static int has_neon(void){
 #endif
 }
 
+static int has_neon64(void){
+#if defined(__aarch64__) && defined(__linux__)
+    return 1;
+#else
+    return 0;
+#endif
+}
+
 %for arch in archs:
 static int i_can_has_${arch.name} (void) {
     %for check, params in arch.checks:

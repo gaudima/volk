@@ -276,5 +276,45 @@ volk_32fc_x2_add_32fc_u_neon(lv_32fc_t* cVector, const lv_32fc_t* aVector,
 
 #endif /* LV_HAVE_NEON */
 
+#ifdef LV_HAVE_NEON64
+#include <arm_neon.h>
+
+static inline void
+volk_32fc_x2_add_32fc_u_neon64(lv_32fc_t* cVector, const lv_32fc_t* aVector,
+                           const lv_32fc_t* bVector, unsigned int num_points)
+{
+  unsigned int number = 0;
+  const unsigned int halfPoints = num_points / 2;
+
+  lv_32fc_t* cPtr = cVector;
+  const lv_32fc_t* aPtr = aVector;
+  const lv_32fc_t* bPtr=  bVector;
+  float32x4_t aVal, bVal, cVal;
+  for(number=0; number < halfPoints; number++){
+    // Load in to NEON64 registers
+    aVal = vld1q_f32((const float32_t*)(aPtr));
+    bVal = vld1q_f32((const float32_t*)(bPtr));
+    __VOLK_PREFETCH(aPtr+2);
+    __VOLK_PREFETCH(bPtr+2);
+
+    // vector add
+    cVal = vaddq_f32(aVal, bVal);
+    // Store the results back into the C container
+    vst1q_f32((float*)(cPtr),cVal);
+
+    aPtr += 2; // q uses quadwords, 4 lv_32fc_ts per vadd
+    bPtr += 2;
+    cPtr += 2;
+  }
+
+  number = halfPoints * 2; // should be = num_points
+  for(;number < num_points; number++){
+    *cPtr++ = (*aPtr++) + (*bPtr++);
+  }
+}
+
+#endif /* LV_HAVE_NEON64 */
+
+
 
 #endif /* INCLUDED_volk_32fc_x2_add_32fc_a_H */

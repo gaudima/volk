@@ -152,6 +152,35 @@ volk_16ic_deinterleave_real_8i_neon(int8_t* iBuffer, const lv_16sc_t* complexVec
 }
 #endif
 
+#ifdef LV_HAVE_NEON64
+#include <arm_neon.h>
+
+static inline void
+volk_16ic_deinterleave_real_8i_neon64(int8_t* iBuffer, const lv_16sc_t* complexVector, unsigned int num_points)
+{
+  const int16_t* complexVectorPtr = (const int16_t*)complexVector;
+  int8_t* iBufferPtr = iBuffer;
+  unsigned int eighth_points = num_points / 8;
+  unsigned int number;
+
+  int16x8x2_t complexInput;
+  int8x8_t realOutput;
+  for(number = 0; number < eighth_points; number++){
+    complexInput = vld2q_s16(complexVectorPtr);
+    realOutput = vshrn_n_s16(complexInput.val[0], 8);
+    vst1_s8(iBufferPtr, realOutput);
+    complexVectorPtr += 16;
+    iBufferPtr += 8;
+  }
+
+  for(number = eighth_points*8; number < num_points; number++){
+    *iBufferPtr++ = ((int8_t)(*complexVectorPtr++ >> 8));
+    complexVectorPtr++;
+  }
+}
+#endif
+
+
 #ifdef LV_HAVE_ORC
 
 extern void

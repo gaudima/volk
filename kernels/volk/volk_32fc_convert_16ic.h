@@ -221,6 +221,72 @@ static inline void volk_32fc_convert_16ic_neon(lv_16sc_t* outputVector, const lv
 
 #endif /* LV_HAVE_NEON */
 
+#ifdef LV_HAVE_NEON64
+#include <arm_neon.h>
+
+static inline void volk_32fc_convert_16ic_neon64(lv_16sc_t* outputVector, const lv_32fc_t* inputVector, unsigned int num_points)
+{
+    const unsigned int neon64_iters = num_points / 4;
+
+    float32_t* inputVectorPtr = (float32_t*)inputVector;
+    int16_t* outputVectorPtr = (int16_t*)outputVector;
+
+    const float min_val_f = (float)SHRT_MIN;
+    const float max_val_f = (float)SHRT_MAX;
+    float32_t aux;
+    unsigned int i;
+
+    const float32x4_t min_val = vmovq_n_f32(min_val_f);
+    const float32x4_t max_val = vmovq_n_f32(max_val_f);
+    float32x4_t half = vdupq_n_f32(0.5f);
+    float32x4_t ret1, ret2, a, b, sign, PlusHalf, Round;
+
+    int32x4_t toint_a, toint_b;
+    int16x4_t intInputVal1, intInputVal2;
+    int16x8_t res;
+
+    for(i = 0; i < neon64_iters; i++)
+        {
+            a = vld1q_f32((const float32_t*)(inputVectorPtr)); inputVectorPtr += 4;
+            b = vld1q_f32((const float32_t*)(inputVectorPtr)); inputVectorPtr += 4;
+            __VOLK_PREFETCH(inputVectorPtr + 8);
+
+            ret1 = vmaxq_f32(vminq_f32(a, max_val), min_val);
+            ret2 = vmaxq_f32(vminq_f32(b, max_val), min_val);
+
+            /* in __aarch64__ we can do that with vcvtaq_s32_f32(ret1); vcvtaq_s32_f32(ret2); */
+            sign = vcvtq_f32_u32((vshrq_n_u32(vreinterpretq_u32_f32(ret1), 31)));
+            PlusHalf = vaddq_f32(ret1, half);
+            Round = vsubq_f32(PlusHalf, sign);
+            toint_a = vcvtq_s32_f32(Round);
+
+            sign = vcvtq_f32_u32((vshrq_n_u32(vreinterpretq_u32_f32(ret2), 31)));
+            PlusHalf = vaddq_f32(ret2, half);
+            Round = vsubq_f32(PlusHalf, sign);
+            toint_b = vcvtq_s32_f32(Round);
+
+            intInputVal1 = vqmovn_s32(toint_a);
+            intInputVal2 = vqmovn_s32(toint_b);
+
+            res = vcombine_s16(intInputVal1, intInputVal2);
+            vst1q_s16((int16_t*)outputVectorPtr, res);
+            outputVectorPtr += 8;
+        }
+
+    for(i = neon64_iters * 8; i < num_points * 2; i++)
+        {
+            aux = *inputVectorPtr++;
+            if(aux > max_val_f)
+                aux = max_val_f;
+            else if(aux < min_val_f)
+                aux = min_val_f;
+            *outputVectorPtr++ = (int16_t)rintf(aux);
+        }
+}
+
+#endif /* LV_HAVE_NEON64 */
+
+
 
 #ifdef LV_HAVE_GENERIC
 

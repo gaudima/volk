@@ -258,6 +258,34 @@ volk_32f_s32f_multiply_32f_u_neon(float* cVector, const float* aVector,
 }
 #endif /* LV_HAVE_NEON */
 
+#ifdef LV_HAVE_NEON64
+#include <arm_neon.h>
+
+static inline void
+volk_32f_s32f_multiply_32f_u_neon64(float* cVector, const float* aVector,
+                                  const float scalar, unsigned int num_points)
+{
+  unsigned int number = 0;
+  const float* inputPtr = aVector;
+  float* outputPtr = cVector;
+  const unsigned int quarterPoints = num_points / 4;
+
+  float32x4_t aVal, cVal;
+
+  for(number = 0; number < quarterPoints; number++){
+    aVal = vld1q_f32(inputPtr); // Load into NEON64 regs
+    cVal = vmulq_n_f32 (aVal, scalar); // Do the multiply
+    vst1q_f32(outputPtr, cVal); // Store results back to output
+    inputPtr += 4;
+    outputPtr += 4;
+  }
+  for(number = quarterPoints * 4; number < num_points; number++){
+    *outputPtr++ = (*inputPtr++) * scalar;
+  }
+}
+#endif /* LV_HAVE_NEON64 */
+
+
 
 #ifdef LV_HAVE_GENERIC
 

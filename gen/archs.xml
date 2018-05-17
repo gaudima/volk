@@ -226,4 +226,10 @@
     <alignment>32</alignment>
 </arch>
 
+<arch name="neon64">
+  <flag compiler="gnu">-funsafe-math-optimizations</flag>
+  <alignment>16</alignment>
+  <check name="has_neon64"></check>
+</arch>
+
 </grammar>

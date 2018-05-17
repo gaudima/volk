@@ -213,6 +213,41 @@ volk_32fc_32f_multiply_32fc_neon(lv_32fc_t* cVector, const lv_32fc_t* aVector,
 }
 #endif /* LV_HAVE_NEON */
 
+#ifdef LV_HAVE_NEON64
+#include <arm_neon.h>
+
+static inline void
+volk_32fc_32f_multiply_32fc_neon64(lv_32fc_t* cVector, const lv_32fc_t* aVector,
+                                 const float* bVector, unsigned int num_points)
+{
+  lv_32fc_t* cPtr = cVector;
+  const lv_32fc_t* aPtr = aVector;
+  const float* bPtr=  bVector;
+  unsigned int number = 0;
+  unsigned int quarter_points = num_points / 4;
+
+  float32x4x2_t inputVector, outputVector;
+  float32x4_t tapsVector;
+  for(number = 0; number < quarter_points; number++){
+    inputVector = vld2q_f32((float*)aPtr);
+    tapsVector = vld1q_f32(bPtr);
+
+    outputVector.val[0] = vmulq_f32(inputVector.val[0], tapsVector);
+    outputVector.val[1] = vmulq_f32(inputVector.val[1], tapsVector);
+
+    vst2q_f32((float*)cPtr, outputVector);
+    aPtr += 4;
+    bPtr += 4;
+    cPtr += 4;
+  }
+
+  for(number = quarter_points * 4; number < num_points; number++){
+    *cPtr++ = (*aPtr++) * (*bPtr++);
+  }
+}
+#endif /* LV_HAVE_NEON64 */
+
+
 
 #ifdef LV_HAVE_ORC
 

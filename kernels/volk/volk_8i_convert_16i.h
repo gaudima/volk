@@ -216,6 +216,41 @@ volk_8i_convert_16i_neon(int16_t* outputVector, const int8_t* inputVector, unsig
 }
 #endif /* LV_HAVE_NEON */
 
+#ifdef LV_HAVE_NEON64
+#include <arm_neon.h>
+
+static inline void
+volk_8i_convert_16i_neon64(int16_t* outputVector, const int8_t* inputVector, unsigned int num_points)
+{
+  int16_t* outputVectorPtr = outputVector;
+  const int8_t* inputVectorPtr = inputVector;
+  unsigned int number;
+  const unsigned int eighth_points = num_points / 8;
+
+  int8x8_t input_vec ;
+  int16x8_t converted_vec;
+
+  // NEON64 doesn't have a concept of 8 bit registers, so we are really
+  // dealing with the low half of 16-bit registers. Since this requires
+  // a move instruction we likely do better with ASM here.
+  for(number = 0; number < eighth_points; ++number) {
+    input_vec = vld1_s8(inputVectorPtr);
+    converted_vec = vmovl_s8(input_vec);
+    //converted_vec = vmulq_s16(converted_vec, scale_factor);
+    converted_vec = vshlq_n_s16(converted_vec, 8);
+    vst1q_s16( outputVectorPtr, converted_vec);
+
+    inputVectorPtr += 8;
+    outputVectorPtr += 8;
+  }
+
+  for(number = eighth_points * 8; number < num_points; number++){
+    *outputVectorPtr++ = ((int16_t)(*inputVectorPtr++)) * 256;
+  }
+}
+#endif /* LV_HAVE_NEON64 */
+
+
 
 #ifdef LV_HAVE_ORC
 extern void

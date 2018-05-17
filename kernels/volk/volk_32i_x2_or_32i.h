@@ -188,6 +188,38 @@ volk_32i_x2_or_32i_neon(int32_t* cVector, const int32_t* aVector,
 }
 #endif /* LV_HAVE_NEON */
 
+#ifdef LV_HAVE_NEON64
+#include <arm_neon.h>
+
+static inline void
+volk_32i_x2_or_32i_neon64(int32_t* cVector, const int32_t* aVector,
+                        const int32_t* bVector, unsigned int num_points)
+{
+  int32_t* cPtr = cVector;
+  const int32_t* aPtr = aVector;
+  const int32_t* bPtr=  bVector;
+  unsigned int number = 0;
+  unsigned int quarter_points = num_points / 4;
+
+  int32x4_t a_val, b_val, c_val;
+
+  for(number = 0; number < quarter_points; number++){
+    a_val = vld1q_s32(aPtr);
+    b_val = vld1q_s32(bPtr);
+    c_val = vorrq_s32(a_val, b_val);
+    vst1q_s32(cPtr, c_val);
+    aPtr += 4;
+    bPtr += 4;
+    cPtr += 4;
+  }
+
+  for(number = quarter_points * 4; number < num_points; number++){
+    *cPtr++ = (*aPtr++) | (*bPtr++);
+  }
+}
+#endif /* LV_HAVE_NEON64 */
+
+
 
 #ifdef LV_HAVE_GENERIC
 

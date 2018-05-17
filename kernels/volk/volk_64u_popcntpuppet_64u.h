@@ -57,4 +57,15 @@ static inline void volk_64u_popcntpuppet_64u_neon(uint64_t* outVector, const uin
 }
 #endif /* LV_HAVE_NEON */
 
+#ifdef LV_HAVE_NEON64
+static inline void volk_64u_popcntpuppet_64u_neon64(uint64_t* outVector, const uint64_t* inVector, unsigned int num_points){
+    unsigned int ii;
+    for(ii=0; ii < num_points; ++ii) {
+        volk_64u_popcnt_neon64(outVector+ii, num_points );
+    }
+    memcpy((void*)outVector, (void*)inVector, num_points * sizeof(uint64_t));
+}
+#endif /* LV_HAVE_NEON64 */
+
+
 #endif /* INCLUDED_volk_32fc_s32fc_rotatorpuppet_32fc_a_H */

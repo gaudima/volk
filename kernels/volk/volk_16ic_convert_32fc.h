@@ -213,4 +213,38 @@ static inline void volk_16ic_convert_32fc_neon(lv_32fc_t* outputVector, const lv
 }
 #endif /* LV_HAVE_NEON */
 
+#ifdef LV_HAVE_NEON64
+#include <arm_neon.h>
+
+static inline void volk_16ic_convert_32fc_neon64(lv_32fc_t* outputVector, const lv_16sc_t* inputVector, unsigned int num_points)
+{
+    const unsigned int sse_iters = num_points / 2;
+
+    const lv_16sc_t* _in = inputVector;
+    lv_32fc_t* _out = outputVector;
+
+    int16x4_t a16x4;
+    int32x4_t a32x4;
+    float32x4_t f32x4;
+    unsigned int i, number;
+
+    for(number = 0; number < sse_iters; number++)
+        {
+            a16x4 = vld1_s16((const int16_t*)_in);
+            __VOLK_PREFETCH(_in + 4);
+            a32x4 = vmovl_s16(a16x4);
+            f32x4 = vcvtq_f32_s32(a32x4);
+            vst1q_f32((float32_t*)_out, f32x4);
+            _in += 2;
+            _out += 2;
+        }
+    for (i = 0; i < (num_points % 2); ++i)
+        {
+            *_out++ = lv_cmake((float)lv_creal(*_in), (float)lv_cimag(*_in));
+            _in++;
+        }
+}
+#endif /* LV_HAVE_NEON64 */
+
+
 #endif /* INCLUDED_volk_32fc_convert_16ic_H */

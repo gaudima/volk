@@ -266,6 +266,39 @@ volk_32fc_conjugate_32fc_a_neon(lv_32fc_t* cVector, const lv_32fc_t* aVector, un
 }
 #endif /* LV_HAVE_NEON */
 
+#ifdef LV_HAVE_NEON64
+#include <arm_neon.h>
+
+static inline void
+volk_32fc_conjugate_32fc_a_neon64(lv_32fc_t* cVector, const lv_32fc_t* aVector, unsigned int num_points)
+{
+  unsigned int number;
+  const unsigned int quarterPoints = num_points / 4;
+
+  float32x4x2_t x;
+  lv_32fc_t* c = cVector;
+  const lv_32fc_t* a = aVector;
+
+  for(number=0; number < quarterPoints; number++){
+    __VOLK_PREFETCH(a+4);
+    x = vld2q_f32((float*)a); // Load the complex data as ar,br,cr,dr; ai,bi,ci,di
+
+    // xor the imaginary lane
+    x.val[1] = vnegq_f32( x.val[1]);
+
+    vst2q_f32((float*)c,x); // Store the results back into the C container
+
+    a += 4;
+    c += 4;
+  }
+
+  for(number=quarterPoints*4; number < num_points; number++){
+    *c++ = lv_conj(*a++);
+  }
+}
+#endif /* LV_HAVE_NEON64 */
+
+
 
 #ifdef LV_HAVE_GENERIC
 

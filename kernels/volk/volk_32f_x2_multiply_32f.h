@@ -274,6 +274,32 @@ volk_32f_x2_multiply_32f_neon(float* cVector, const float* aVector,
 }
 #endif /* LV_HAVE_NEON */
 
+#ifdef LV_HAVE_NEON64
+#include <arm_neon.h>
+
+static inline void
+volk_32f_x2_multiply_32f_neon64(float* cVector, const float* aVector,
+                              const float* bVector, unsigned int num_points)
+{
+  const unsigned int quarter_points = num_points / 4;
+  unsigned int number;
+  float32x4_t avec, bvec, cvec;
+  for(number=0; number < quarter_points; ++number) {
+    avec = vld1q_f32(aVector);
+    bvec = vld1q_f32(bVector);
+    cvec = vmulq_f32(avec, bvec);
+    vst1q_f32(cVector, cvec);
+    aVector += 4;
+    bVector += 4;
+    cVector += 4;
+  }
+  for(number=quarter_points*4; number < num_points; ++number) {
+    *cVector++ = *aVector++ * *bVector++;
+  }
+}
+#endif /* LV_HAVE_NEON64 */
+
+
 
 #ifdef LV_HAVE_GENERIC
 

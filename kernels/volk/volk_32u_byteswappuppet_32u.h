@@ -23,6 +23,16 @@ static inline void volk_32u_byteswappuppet_32u_neon(uint32_t*output, uint32_t* i
 }
 #endif
 
+#ifdef LV_HAVE_NEON64
+static inline void volk_32u_byteswappuppet_32u_neon64(uint32_t*output, uint32_t* intsToSwap, unsigned int num_points){
+
+    volk_32u_byteswap_neon64((uint32_t*)intsToSwap, num_points);
+    memcpy((void*)output, (void*)intsToSwap, num_points * sizeof(uint32_t));
+
+}
+#endif
+
+
 #ifdef LV_HAVE_SSE2
 static inline void volk_32u_byteswappuppet_32u_u_sse2(uint32_t *output, uint32_t* intsToSwap, unsigned int num_points){
 
